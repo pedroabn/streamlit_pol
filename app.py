@@ -4,44 +4,39 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
+from utils.defs import load_cand, load_votos
 #%%
-@st.cache_data
-def load_data():
-    df = pd.read_excel("Vereadores_map.xlsx")
-    return df
-
-df = load_data()
+df_cand = load_cand()
 
 candidato = "Romerinho Jatobá"
 with st.sidebar:
     st.title("Resultado Eleições 2024 - Recife")
-    candidato = st.selectbox("Candidato (a)",df["vereador"].sort_values().unique())
-    RPA = st.selectbox("RPA",["TODOS","RPA1","RPA2","RPA3","RPA4","RPA5","RPA6"])
+    candidato = st.selectbox("Candidato (a)",df_cand["nome_urna"].sort_values().unique())
+#     RPA = st.selectbox("RPA",["TODOS","RPA1","RPA2","RPA3","RPA4","RPA5","RPA6"])
 
-if RPA == "TODOS":
-    pass
-else:
-    df = df[df["RPA"] == RPA]
+# if RPA == "TODOS":
+#     pass
+# else:
+#     df = df[df["RPA"] == RPA]
 
-
-df_candidato = df[df["NM_URNA_CANDIDATO"] == candidato]
+df_candidato = df_cand[df_cand["nome_urna"] == candidato]
 
 # FICHA DO CANDIDATO
 ## Criando a função para obtenção dos dados
 def dict_candidato(df):
-    nome = df['NM_CANDIDATO'].iloc[0]
-    numero = str(df['NR_CANDIDATO'].iloc[0])
-    sigla_partido, nome_partido = df['SG_PARTIDO'].iloc[0],df['NM_PARTIDO'].iloc[0]
-    nome_partido = sigla_partido + " - "+nome_partido
-    data_nascimento = datetime.strptime(str(df['DT_NASCIMENTO'].iloc[0]), '%d/%m/%Y')
-    idade = ((datetime.strptime("06/10/2024", '%d/%m/%Y') - data_nascimento).days)//365
+    nome = df['nome_urna'].iloc[0]
+    #numero = str(df['NR_CANDIDATO'].iloc[0])
+    # sigla_partido, nome_partido = df['SG_PARTIDO'].iloc[0],df['NM_PARTIDO'].iloc[0]
+    # nome_partido = sigla_partido + " - "+nome_partido
+    # data_nascimento = datetime.strptime(str(df['DT_NASCIMENTO'].iloc[0]), '%d/%m/%Y')
+    # idade = ((datetime.strptime("06/10/2024", '%d/%m/%Y') - data_nascimento).days)//365
 
 
     dicionario = {
         "NOME":nome,
-        "NÚMERO": numero,
-        "PARTIDO":nome_partido,
-        "IDADE":idade,
+        # "NÚMERO": numero,
+        # "PARTIDO":nome_partido,
+        # "IDADE":idade,
     }
 
     return dicionario
