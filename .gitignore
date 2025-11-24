@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+# pasta de manipulacão
+manipulacao/
 
 # C extensions
 *.so
