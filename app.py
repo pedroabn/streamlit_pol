@@ -3,60 +3,87 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import datetime
-from utils.defs import load_cand, load_votos
+from core.carregar import load_cand, load_localvoto
 #%%
 df_cand = load_cand()
+df_votos = load_localvoto()
 
-candidato = "Romerinho Jatobá"
 with st.sidebar:
     st.title("Resultado Eleições 2024 - Recife")
     candidato = st.selectbox("Candidato (a)",df_cand["nome_urna"].sort_values().unique())
-#     RPA = st.selectbox("RPA",["TODOS","RPA1","RPA2","RPA3","RPA4","RPA5","RPA6"])
+    RPA = st.selectbox("RPA",["TODOS","RPA1","RPA2","RPA3","RPA4","RPA5","RPA6"])
 
-# if RPA == "TODOS":
-#     pass
-# else:
-#     df = df[df["RPA"] == RPA]
+if RPA == "TODOS":
+    pass
+else:
+    df_votos = df_votos[df_votos["RPA"] == RPA]
 
+df_vt_loc = df_votos[df_votos['nome_candidato'] == candidato]
 df_candidato = df_cand[df_cand["nome_urna"] == candidato]
 
 # FICHA DO CANDIDATO
-## Criando a função para obtenção dos dados
-def dict_candidato(df):
+# Criando a função para obtenção dos dados
+def dict_candidato(df,df_voto):
     nome = df['nome_urna'].iloc[0]
-    #numero = str(df['NR_CANDIDATO'].iloc[0])
-    # sigla_partido, nome_partido = df['SG_PARTIDO'].iloc[0],df['NM_PARTIDO'].iloc[0]
-    # nome_partido = sigla_partido + " - "+nome_partido
-    # data_nascimento = datetime.strptime(str(df['DT_NASCIMENTO'].iloc[0]), '%d/%m/%Y')
-    # idade = ((datetime.strptime("06/10/2024", '%d/%m/%Y') - data_nascimento).days)//365
-
+    genero = str(df['genero'].iloc[0])
+    sigla_partido = df['sigla_partido'].iloc[0]
+    idade = df['idade'].iloc[0]
+    raca = df['raca'].iloc[0]
+    resultado = df['Resultado'].iloc[0]
+    votos = df_voto['votos_recebidos'].sum()
 
     dicionario = {
         "NOME":nome,
-        # "NÚMERO": numero,
-        # "PARTIDO":nome_partido,
-        # "IDADE":idade,
+        "GÊNERO": genero,
+        "PARTIDO":sigla_partido,
+        "IDADE":idade,
+        'RAÇA':raca,
+        "RESULTADO":resultado,
+        "VOTOS": votos
     }
 
     return dicionario
 
-dicionario = dict_candidato(df_candidato)
+dicionario = dict_candidato(df_candidato,df_vt_loc)
 ## Escrevendo a ficha
-st.markdown(f"""
-## *{dicionario['NOME']}*
-Número de urna: {dicionario["NÚMERO"]}
-||| Partido: {dicionario["PARTIDO"]}
-\nIdade: {dicionario["IDADE"]} anos
-||| Gênero: {dicionario["GÊNERO"]}
-||| Etnia: {dicionario["ETNIA"]}
-\n 
-:blue-background[Resultado: {dicionario["RESULTADO"]}] """)
+
+st.markdown(
+    f"""
+<style>
+.table-full {{
+    width: 100%;
+    border-collapse: collapse;
+}}
+.table-full th, .table-full td {{
+    border: 0.5px solid #ddd;
+    padding: 8px;
+}}
+.table-full th {{
+    font-weight: bold;
+    text-align: center;
+}}
+.table-full td:nth-child(2) {{
+    text-align: center;
+}}
+</style>
+
+<table class="table-full">
+    <tr><th>Métrica</th><th>Valor</th></tr>
+    <tr><td>Número de votos</td><td>{dicionario["VOTOS"]}</td></tr>
+    <tr><td>Partido</td><td>{dicionario["PARTIDO"]}</td></tr>
+    <tr><td>Idade</td><td>{dicionario["IDADE"]} anos</td></tr>
+    <tr><td>Gênero</td><td>{dicionario["GÊNERO"]}</td></tr>
+    <tr><td>Raça</td><td>{dicionario["RAÇA"]}</td></tr>
+    <tr><td>Eleito?</td><td>{dicionario["RESULTADO"]}</td></tr>
+</table>
+""",
+    unsafe_allow_html=True,
+)
 
 # MAPA DE VOTAÇÃO
 def display_mapa(df):
     # Limpando o Dataframe
-    df_agrupado = df.groupby(['NM_LOCAL_VOTACAO','BAIRRO', 'y', 'x'],
+    df_agrupado = df.groupby(['local','EBAIRRNOMEOF', 'latitude', 'longitude'],
     as_index=False)['QT_VOTOS'].sum()
     df_agrupado = df_agrupado.sort_values(by='QT_VOTOS', ascending=False)
 
