@@ -1,6 +1,6 @@
 import pandas as pd
 import plotly.express as px
-from app import candidato
+
 # Definindo funções
 def graph_candidatos(df):
     # Organizando dados
