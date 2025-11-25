@@ -4,50 +4,42 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_folium import st_folium
-from core.carregar import load_cand, load_localvoto
+from visuals.mapa import display_mapa
+from core.header import dict_candidato
+from core.dados_pt import dados_pt
+from core.dados_voto import dados_votocao
+from core.carregar import load_cand, load_localvoto, load_map, load_vtpart
 #%%
 df_cand = load_cand()
 df_votos = load_localvoto()
+df_map = load_map()
+df_partidos = load_vtpart()
 
 with st.sidebar:
     st.title("Resultado Eleições 2024 - Recife")
     candidato = st.selectbox("Candidato (a)",df_cand["nome_urna"].sort_values().unique())
     RPA = st.selectbox("RPA",["TODOS","RPA1","RPA2","RPA3","RPA4","RPA5","RPA6"])
 
+df_vt_loc = df_votos.copy()
+df_candidato = df_cand.copy()
+df_vt_ptc = df_map.copy()
+
+
+df_vt_loc = df_vt_loc[df_vt_loc['nome_candidato'] == candidato]
+df_candidato = df_candidato[df_candidato["nome_urna"] == candidato]
+df_map = df_map[df_map['nome_candidato']== candidato]
+
 if RPA == "TODOS":
     pass
 else:
-    df_votos = df_votos[df_votos["RPA"] == RPA]
-
-df_vt_loc = df_votos[df_votos['nome_candidato'] == candidato]
-df_candidato = df_cand[df_cand["nome_urna"] == candidato]
-
+    df_vt_loc = df_votos[df_votos["RPA"] == RPA]
+    df_map = df_map[df_map["RPA"] == RPA]
+    df_vt_ptc = df_vt_ptc[df_vt_ptc["RPA"] == RPA]
+    
+    
 # FICHA DO CANDIDATO
 # Criando a função para obtenção dos dados
-def dict_candidato(df,df_voto):
-    nome = df['nome_urna'].iloc[0]
-    genero = str(df['genero'].iloc[0])
-    sigla_partido = df['sigla_partido'].iloc[0]
-    idade = df['idade'].iloc[0]
-    raca = df['raca'].iloc[0]
-    resultado = df['Resultado'].iloc[0]
-    votos = df_voto['votos_recebidos'].sum()
-
-    dicionario = {
-        "NOME":nome,
-        "GÊNERO": genero,
-        "PARTIDO":sigla_partido,
-        "IDADE":idade,
-        'RAÇA':raca,
-        "RESULTADO":resultado,
-        "VOTOS": votos
-    }
-
-    return dicionario
-
-dicionario = dict_candidato(df_candidato,df_vt_loc)
-## Escrevendo a ficha
-
+header = dict_candidato(df_candidato)
 st.markdown(
     f"""
 <style>
@@ -70,123 +62,55 @@ st.markdown(
 
 <table class="table-full">
     <tr><th>Métrica</th><th>Valor</th></tr>
-    <tr><td>Número de votos</td><td>{dicionario["VOTOS"]}</td></tr>
-    <tr><td>Partido</td><td>{dicionario["PARTIDO"]}</td></tr>
-    <tr><td>Idade</td><td>{dicionario["IDADE"]} anos</td></tr>
-    <tr><td>Gênero</td><td>{dicionario["GÊNERO"]}</td></tr>
-    <tr><td>Raça</td><td>{dicionario["RAÇA"]}</td></tr>
-    <tr><td>Eleito?</td><td>{dicionario["RESULTADO"]}</td></tr>
+    <tr><td>Número de votos</td><td>{header["VOTOS"]}</td></tr>
+    <tr><td>Partido</td><td>{header["PARTIDO"]}</td></tr>
+    <tr><td>Idade</td><td>{header["IDADE"]} anos</td></tr>
+    <tr><td>Gênero</td><td>{header["GÊNERO"]}</td></tr>
+    <tr><td>Raça</td><td>{header["RAÇA"]}</td></tr>
+    <tr><td>Eleito?</td><td>{header["RESULTADO"]}</td></tr>
 </table>
 """,
     unsafe_allow_html=True,
 )
 
 # MAPA DE VOTAÇÃO
-def display_mapa(df):
-    # Limpando o Dataframe
-    df_agrupado = df.groupby(['local','EBAIRRNOMEOF', 'latitude', 'longitude'],
-    as_index=False)['QT_VOTOS'].sum()
-    df_agrupado = df_agrupado.sort_values(by='QT_VOTOS', ascending=False)
-
-    # Construindo o mapa
-    fig = px.scatter_mapbox(df_agrupado, lat = 'y', lon='x',
-    hover_data=['NM_LOCAL_VOTACAO','BAIRRO'],
-    zoom=9, color= 'QT_VOTOS',size='QT_VOTOS',
-    color_continuous_scale='RdBu_r')
-    fig.update_layout(mapbox_style = 'open-street-map')
-
-    return fig
-
-mapa = display_mapa(df_candidato)
+mapa = display_mapa(df_map)
 st.markdown(f"### :round_pushpin: **Mapa de votação {candidato}**")
-st.plotly_chart(mapa)
+st_folium(mapa, width=800, height=700)
 
-# BIG NUMBERS ELEITORAIS
-def display_big_numbers_cand(df):
-    #Organizando planilha de dados
-    df = df.groupby(['NM_LOCAL_VOTACAO','BAIRRO'],as_index=False)['QT_VOTOS'].sum()
-    
-    #Separando dados
-    total_votos = df["QT_VOTOS"].sum()
-    mediana_votos = df["QT_VOTOS"].median()
-    locais_votacao = len((df["NM_LOCAL_VOTACAO"].unique()).tolist())
+# Dados de votação
+infovoto = dados_votocao(df_map)
 
-    dicionario2 = {
-        "Total de votos":total_votos,
-        "Mediana": mediana_votos,
-        "N Locais de votação":locais_votacao
-    }
-
-    return dicionario2
-
-
-
-#Retornando o dicionário dados candidato
-dicionario2 = display_big_numbers_cand(df_candidato)
-
-# Definindo função dados eleitorais
-def display_dados_eleitorais(df):
-    # Minerando dados
-    sigla_partido = df_candidato["SG_PARTIDO"].values[0]
-    df_partido = df[df["SG_PARTIDO"] == sigla_partido]
-    df_partido = df_partido.groupby(['NM_URNA_CANDIDATO','NR_CANDIDATO','DS_SIT_TOT_TURNO'
-    ],as_index=False)['QT_VOTOS'].sum()
-
-    # Separando dados
-    perct_votos = f"{(dicionario2["Total de votos"]/df_partido["QT_VOTOS"].sum())*100 :.1f} %"
-    numero_cadeiras = df_partido["DS_SIT_TOT_TURNO"].isin(["ELEITO POR QP",
-    "ELEITO POR MÉDIA"]).sum()
-    votos_totais_chapa = df_partido["QT_VOTOS"].sum()
-
-    dicionario3 = {
-        "Percentual votos":perct_votos,
-        "Quantidade de cadeiras": numero_cadeiras,
-        "Votos totais da chapa": votos_totais_chapa
-    }
-
-    return dicionario3
-
-dicionario3 = display_dados_eleitorais(df)
+infopartido = dados_pt(df_partidos, df_candidato)
 
 st.markdown("### :ballot_box_with_ballot: **Dados eleitorais & Partidários**")
 #Definindo estrutura de exposição
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 with col1:
-    st.metric(
-        label = "Total de votos",
-        value = dicionario2["Total de votos"],
-        border = True
-    )
-    st.metric(
-        label = "% votos em relação à chapa",
-        value = dicionario3["Percentual votos"],
-        border = True
-    )
+    with st.container(border=True):
+        st.metric(
+            label = "Total de votos",
+            value = infovoto["Total de votos"]
+        )
+    with st.container(border=True):    
+        st.metric(
+            label = "% votos em relação à chapa",
+            value = infopartido["Percentual votos"]        
+        )
 
 with col2:
-    st.metric(
-        label = "Mediana dos votos",
-        value = dicionario2["Mediana"],
-        border = True
-    )
-    st.metric(
-        label = "Quantidade de cadeiras",
-        value = dicionario3["Quantidade de cadeiras"],
-        border = True
-    )
-
-with col3:
-    st.metric(
-        label = "Locais de votação atendidos",
-        value = dicionario2["N Locais de votação"],
-        border = True
-    )
-    st.metric(
-        label = "Total votos da chapa",
-        value = dicionario3["Votos totais da chapa"],
-        border = True
-    )
+    with st.container(border=True):
+        st.metric(
+            label = "Mediana dos votos",
+            value = infovoto["Mediana"],
+       )
+    with st.container(border=True):
+        st.metric(
+            label = "Total votos da chapa",
+            value = infopartido["Votos totais da chapa"]
+        )
+        
 
 st.markdown(":keycap_star: Nesta análise foram considerados apenas os votos nominais para vereador.")
 
@@ -198,10 +122,9 @@ st.markdown("### :bar_chart: **Gráficos**")
 # Definindo funções
 def graph_candidatos(df):
     # Organizando dados
-    df = df.groupby(["NM_URNA_CANDIDATO","SG_PARTIDO"],as_index=False)['QT_VOTOS'].sum()
-    df = df.sort_values(by='QT_VOTOS', ascending=False)
+    df = df.groupby(["nome_candidato","sigla_partido"],as_index=False)['votos'].sum()
+    df = df.sort_values(by='votos', ascending=False)
     df = df.head(10)
-    
     #Definindo cores
     cores_partidos = {
     "MDB": "blue",
@@ -211,31 +134,32 @@ def graph_candidatos(df):
     "PODE": "coral",
     "REPUBLICANOS": "gold",
     "CIDADANIA": "brown",
-    "PL": "goldenrod",
+    'MOBILIZA':'salmon',
+    "PL": "darkgreen",
     "PV": "lime",
     "PP": "teal",
     "PRD": "green",
-    "DC": "olive",
+    "SOLIDARIEDADE": "olive",
     "PRTB": "navy",
     "UP": "maroon",
     "PT": "red",
     "REDE": "indigo",
     "PSOL": "purple",
     "AGIR": "skyblue",
-    "PSDB": "darkgreen",
-    "PSB": "salmon",
+    "PSDB": "cornflowerblue",
+    "PSB": "yellow",
     "UNIÃO": "darkblue",
     "AVANTE": "darkred",
     "PSTU": "darkorange",
     "PC do B": "darkviolet"
     }
-    
-    # Organizando o Plot
-    fig = px.bar(df, x='QT_VOTOS', y='NM_URNA_CANDIDATO', orientation = 'h',
-    hover_data="SG_PARTIDO",title=f"Top 10 mais votados", labels ={"NM_URNA_CANDIDATO":"",
-    "QT_VOTOS":"Quantidade de votos"})
 
-    fig.update_traces(marker_color=[cores_partidos[p] for p in df['SG_PARTIDO']])
+    # Organizando o Plot
+    fig = px.bar(df, x='votos', y='nome_candidato', orientation = 'h',
+    hover_data="sigla_partido",title=f"Top 10 mais votados", labels ={"nome_candidato":"",
+    "votos":"Quantidade de votos"})
+
+    fig.update_traces(marker_color=[cores_partidos[p] for p in df['sigla_partido']])
 
     return fig
 
@@ -316,18 +240,21 @@ def graph_locais(df):
 
 
 # Plotando gráficos
+plot_votos_candidatos = graph_candidatos(df_vt_ptc)
+st.plotly_chart(plot_votos_candidatos)
+
 col1, col2 = st.columns(2)
 
-plot_votos_candidatos = graph_candidatos(df)
-plot_bairros = graph_bairros(df_candidato)
+plot_votos_candidatos = graph_candidatos(df_candidato)
+plot_bairros = graph_bairros(df)
 with col1:
     st.plotly_chart(plot_votos_candidatos)
 
-    st.plotly_chart(plot_bairros)
+    # st.plotly_chart(plot_bairros)
 
 
 plot_votos_chapa = graph_candidatos_chapa(df)
-plot_locais = graph_locais(df_candidato)
+plot_locais = graph_locais(df)
 with col2:
     st.plotly_chart(plot_votos_chapa)
 

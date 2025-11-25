@@ -73,6 +73,23 @@ zonas = zona_sec(zonascru)
 zonas = load_cluster(zonas)
 local_voto = votoscru.merge(zonas, on=['secao','zona'], how='left')
 local_voto.to_csv('dados/vt_edit.csv')
+votostotais = local_voto.groupby(['nome_candidato']).agg(
+                        votos = ('votos_recebidos','sum')
+                                 ).reset_index()
 candidato = resultado(candidatocru)
+candidato = candidato.merge(votostotais, right_on='nome_candidato',left_on='nome_urna', how='left')
 candidato.to_csv('dados/cand_edit.csv')
+#%%
+voto_por_loc = (local_voto.merge(candidato, on='nome_candidato', how='left')
+                    .groupby(['local','nome_candidato','EBAIRRNOMEOF','RPA',
+                    'latitude','longitude','sigla_partido']).agg(
+                    votos = ('votos_recebidos','sum')).reset_index())
+voto_por_loc.to_csv('dados/voto_pl.csv')
+#%%
+partidos = pd.read_csv('dados\partidos.csv')
+partidos = (partidos.merge(zonas, on=['secao','zona'], how='left')
+            .groupby(['local','sigla_partido','EBAIRRNOMEOF','latitude','longitude','RPA'])
+            .apply(lambda g: (g['votos_legenda'] + g['votos_nominais']).sum())
+            .reset_index(name='votos'))
+partidos.to_csv('dados/partidos_vt.csv')
 # %%
