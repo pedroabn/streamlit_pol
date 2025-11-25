@@ -1,14 +1,14 @@
 import pandas as pd
 import plotly.express as px
-from app import candidato
+
 # Definindo funções
 def graph_candidatos(df):
     # Organizando dados
-    df = df.groupby(["nome_candidato","sigla_partido"],as_index=False)['votos'].sum()
     df = df.sort_values(by='votos', ascending=False)
     df = df.head(10)
     #Definindo cores
     cores_partidos = {
+    'PCO':'white',
     "MDB": "blue",
     "NOVO": "orange",
     "PSD": "cyan",
@@ -33,11 +33,12 @@ def graph_candidatos(df):
     "UNIÃO": "darkblue",
     "AVANTE": "darkred",
     "PSTU": "darkorange",
-    "PC do B": "darkviolet"
+    "PC do B": "darkviolet",
+    "DC":'white'
     }
 
     # Organizando o Plot
-    fig = px.bar(df, x='votos', y='nome_candidato', orientation = 'h',
+    fig = px.bar(df, x='votos', y='nome_candidato',
     hover_data="sigla_partido",title=f"Top 10 mais votados", labels ={"nome_candidato":"",
     "votos":"Quantidade de votos"})
 
@@ -45,24 +46,23 @@ def graph_candidatos(df):
 
     return fig
 
-
-def graph_candidatos_chapa(df):
+def graph_candidatos_chapa(df, df_candidato):
     # Organizando dados
-    sigla_partido = df_candidato["SG_PARTIDO"].values[0]
-    df = df[df["SG_PARTIDO"] == sigla_partido]
-    df = df.groupby(["NM_URNA_CANDIDATO","DS_GENERO"],as_index=False)['QT_VOTOS'].sum()
-    df = df.sort_values(by='QT_VOTOS', ascending=False)
+    sigla_partido = df_candidato["sigla_partido"].iloc[0]
+    df = df[df["sigla_partido"] == sigla_partido]
+    df = df.groupby(["nome_candidato","genero"],as_index=False)['votos'].sum()
+    df = df.sort_values(by='votos', ascending=False)
     df = df.head(10)
 
     # Definindo as cores
-    cores_genero = {"MASCULINO":"blue","FEMININO":"pink"}
+    cores_genero = {"masculino":"blue","feminino":"pink"}
 
     # Organizando plot
-    fig = px.bar(df, x='QT_VOTOS', y='NM_URNA_CANDIDATO', orientation = 'h',
-    hover_data="DS_GENERO",title=f"Top 10 mais votados do {sigla_partido}",
-     labels ={"NM_URNA_CANDIDATO":"", "QT_VOTOS":"Quantidade de votos"})
+    fig = px.bar(df, x='votos', y='nome_candidato', orientation='h', 
+    hover_data="genero",title=f"Top 10 mais votados do {sigla_partido}",
+     labels ={"nome_candidato":"", "votos":"Quantidade de votos"})
 
-    fig.update_traces(marker_color=[cores_genero[p] for p in df['DS_GENERO']])
+    fig.update_traces(marker_color=[cores_genero[p] for p in df['genero']])
 
     return fig
 
@@ -81,37 +81,34 @@ def graph_bairros(df):
     "RPA5": "#9467bd",  # Roxo
     "RPA6": "#8c564b"}  # Marrom    
     # Organizando plot
-    fig = px.bar(df, x='QT_VOTOS', y='BAIRRO', orientation = 'h',
-    hover_data="DISTRITO_ADM",title=f"Top 10 bairros {candidato}",
-     labels ={"BAIRRO":"", "QT_VOTOS":"Quantidade de votos"})
+    fig = px.area(df, x='votos', y='EBAIRRNOMEOF', orientation = 'h',
+    hover_data="RPA",title=f"Top 10 bairro do(a) candidato(a)",
+     labels ={"EBAIRRNOMEOF":"", "votos":"Quantidade de votos"})
 
-    fig.update_traces(marker_color=[cores_itens[p] for p in df['DISTRITO_ADM']])
+    fig.update_traces(marker_color=[cores_itens[p] for p in df['RPA']])
 
     return fig
 
 def graph_locais(df):
     # Organizando dados
-    df = df.groupby(["NM_LOCAL_VOTACAO","BAIRRO","DISTRITO_ADM"],as_index=False)['QT_VOTOS'].sum()
-    df = df.sort_values(by='QT_VOTOS', ascending=False)
+    df = df.groupby(["local","EBAIRRNOMEOF","RPA"],as_index=False)['votos_recebidos'].sum()
+    df = df.sort_values(by='votos_recebidos', ascending=False)
     df = df.head(10)
 
     # Definindo as cores
+    # Definindo as cores
     cores_itens = {
-    "DABEL": "#1f77b4",  # Azul
-    "DABEN": "#ff7f0e",  # Laranja
-    "DAENT": "#2ca02c",  # Verde
-    "DAGUA": "#d62728",  # Vermelho
-    "DAICO": "#9467bd",  # Roxo
-    "DAMOS": "#8c564b",  # Marrom
-    "DAOUT": "#e377c2",  # Rosa
-    "DASAC": "#7f7f7f"   # Cinza
-    }
-
+    "RPA1": "#1f77b4",  # Azul
+    "RPA2": "#ff7f0e",  # Laranja
+    "RPA3": "#2ca02c",  # Verde
+    "RPA4": "#d62728",  # Vermelho
+    "RPA5": "#9467bd",  # Roxo
+    "RPA6": "#8c564b"}  # Marrom    
     # Organizando plots
-    fig = px.bar(df, x='QT_VOTOS', y='NM_LOCAL_VOTACAO', orientation = 'h',
-    hover_data=["BAIRRO","DISTRITO_ADM"],title=f"Top 10 locais de votação {candidato}",
-     labels ={"NM_LOCAL_VOTACAO":"", "QT_VOTOS":"Votos"})
+    fig = px.bar(df, x='votos_recebidos', y='local', orientation = 'h',
+    hover_data=["EBAIRRNOMEOF","RPA"],title=f"Top 10 locais de votação",
+     labels ={"local":"", "votos_recebidos":"Votos"})
 
-    fig.update_traces(marker_color=[cores_itens[p] for p in df['DISTRITO_ADM']])
+    fig.update_traces(marker_color=[cores_itens[p] for p in df['RPA']])
 
     return fig

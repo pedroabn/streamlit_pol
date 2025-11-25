@@ -21,10 +21,14 @@ with st.sidebar:
     candidato = st.selectbox("Candidato (a)",df_cand["nome_urna"].sort_values().unique())
     RPA = st.selectbox("RPA",["TODOS","RPA1","RPA2","RPA3","RPA4","RPA5","RPA6"])
 
+#dados de voto
 df_vt_loc = df_votos.copy()
+#dados candidato
 df_candidato = df_cand.copy()
+#usado no mapa
 df_vt_ptc = df_map.copy()
-
+#dados de candidato + partido
+df_cand_pt = df_cand.copy()
 
 df_vt_loc = df_vt_loc[df_vt_loc['nome_candidato'] == candidato]
 df_candidato = df_candidato[df_candidato["nome_urna"] == candidato]
@@ -123,21 +127,18 @@ st.markdown("### :bar_chart: **Gráficos**")
 
 
 # Plotando gráficos
-plot_votos_candidatos = graph_candidatos(df_vt_ptc)
-st.plotly_chart(plot_votos_candidatos)
-
 col1, col2 = st.columns(2)
 
-plot_votos_candidatos = graph_candidatos(df_candidato)
-plot_bairros = graph_bairros(df)
+plot_votos_candidatos = graph_candidatos(df_cand)
+plot_bairros = graph_bairros(df_vt_ptc)
 with col1:
     st.plotly_chart(plot_votos_candidatos)
 
-    # st.plotly_chart(plot_bairros)
+    st.plotly_chart(plot_bairros)
 
 
-plot_votos_chapa = graph_candidatos_chapa(df)
-plot_locais = graph_locais(df)
+plot_votos_chapa = graph_candidatos_chapa(df_cand_pt, df_candidato)
+plot_locais = graph_locais(df_vt_loc)
 with col2:
     st.plotly_chart(plot_votos_chapa)
 
