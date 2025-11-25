@@ -3,6 +3,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from streamlit_folium import st_folium
 from core.carregar import load_cand, load_localvoto
 #%%
 df_cand = load_cand()
