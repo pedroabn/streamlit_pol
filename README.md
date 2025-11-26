@@ -97,10 +97,6 @@ As Regiões Político-Administrativas (RPAs) de Recife são divisões territoria
 - **RPA 5**: Sudoeste
 - **RPA 6**: Sul
 
-## 📝 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
 ## 👤 Autor
 
 **Pedro Neiva**
