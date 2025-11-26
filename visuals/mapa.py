@@ -1,7 +1,6 @@
 # visuals/mapa.py
 import folium
 from folium.plugins import MiniMap
-import pandas as pd
 import branca.colormap as cm
 
 def display_mapa(df):
@@ -10,7 +9,7 @@ def display_mapa(df):
     m = folium.Map(location=recife_coords, zoom_start=12, tiles="OpenStreetMap")
 
     MiniMap(toggle_display=True).add_to(m)
-    linear = cm.linear.Oranges_06.scale(
+    linear = cm.linear.viridis.scale(
         vmin=df["votos"].min(),
         vmax=df["votos"].max())
     linear.add_to(m)
@@ -23,7 +22,7 @@ def display_mapa(df):
         )
         folium.Circle(
             location=(row.latitude, row.longitude),
-            radius = max(((row.votos / dfgb) * 300), 2),
+            radius = max(((row.votos / dfgb) * 300), 10),
             color = "black",
             weight = 0.2,
             fillColor = linear(row.votos),

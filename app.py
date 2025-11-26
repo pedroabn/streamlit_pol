@@ -87,7 +87,7 @@ infovoto = dados_votocao(df_map)
 
 infopartido = dados_pt(df_partidos, df_candidato)
 
-st.markdown("### :ballot_box_with_ballot: **Dados eleitorais & Partidários**")
+st.markdown("###  :ballot_box_with_ballot: **Dados eleitorais & Partidários**")
 #Definindo estrutura de exposição
 col1, col2 = st.columns(2)
 
