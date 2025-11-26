@@ -64,7 +64,7 @@ def load_candcru(path: str | None = None) -> pd.DataFrame:
     return df
 
 @st.cache_data
-def load_localvoto(path: str | None = None) -> pd.DataFrame:
+def load_vt_edit(path: str | None = None) -> pd.DataFrame:
     if path is None:
         path = DATA_DIR / "vt_edit.csv"
     df = pd.read_csv(path)
@@ -85,7 +85,7 @@ def load_map(path: str | None = None) -> pd.DataFrame:
     return df
 
 @st.cache_data
-def load_vtpart(path: str | None = None) -> pd.DataFrame:
+def load_partidos_vt(path: str | None = None) -> pd.DataFrame:
     if path is None:
         path = DATA_DIR / "partidos_vt.csv"
     df = pd.read_csv(path)

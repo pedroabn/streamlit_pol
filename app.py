@@ -1,20 +1,18 @@
 #%%
 # Importando bibliotecas #
 import streamlit as st
-import pandas as pd
-import plotly.express as px
 from streamlit_folium import st_folium
 from visuals.mapa import display_mapa
 from core.header import dict_candidato
 from core.dados_pt import dados_pt
 from core.dados_voto import dados_votocao
-from core.carregar import load_cand, load_localvoto, load_map, load_vtpart
+from core.carregar import load_cand, load_vt_edit, load_map, load_partidos_vt
 from visuals.graficos import graph_locais, graph_bairros, graph_candidatos, graph_candidatos_chapa
 #%%
 df_cand = load_cand()
-df_votos = load_localvoto()
+df_votos = load_vt_edit()
 df_map = load_map()
-df_partidos = load_vtpart()
+df_partidos = load_partidos_vt()
 
 with st.sidebar:
     st.title("Resultado Eleições 2024 - Recife")
@@ -22,29 +20,30 @@ with st.sidebar:
     RPA = st.selectbox("RPA",["TODOS","RPA1","RPA2","RPA3","RPA4","RPA5","RPA6"])
 
 #dados de voto
-df_vt_loc = df_votos.copy()
+df_filtrado_VotoPorLocal = df_votos.copy()
 #dados candidato
 df_candidato = df_cand.copy()
 #usado no mapa
-df_vt_ptc = df_map.copy()
+df_map = df_map.copy()
 #dados de candidato + partido
-df_cand_pt = df_cand.copy()
+df_candidato_partidos = df_cand.copy()
 
-df_vt_loc = df_vt_loc[df_vt_loc['nome_candidato'] == candidato]
+#Dados filtrados pelo input do usuário
+df_filtrado_VotoPorLocal = df_filtrado_VotoPorLocal[df_filtrado_VotoPorLocal['nome_candidato'] == candidato]
 df_candidato = df_candidato[df_candidato["nome_urna"] == candidato]
 df_map = df_map[df_map['nome_candidato']== candidato]
 
 if RPA == "TODOS":
     pass
 else:
-    df_vt_loc = df_votos[df_votos["RPA"] == RPA]
+    df_filtrado_VotoPorLocal = df_votos[df_votos["RPA"] == RPA]
     df_map = df_map[df_map["RPA"] == RPA]
-    df_vt_ptc = df_vt_ptc[df_vt_ptc["RPA"] == RPA]
     
     
 # FICHA DO CANDIDATO
 # Criando a função para obtenção dos dados
 header = dict_candidato(df_candidato)
+st.markdown(f"#  Dados da eleição de: {candidato}")
 st.markdown(
     f"""
 <style>
@@ -116,30 +115,27 @@ with col2:
             value = infopartido["Votos totais da chapa"]
         )
         
-
-st.markdown(":keycap_star: Nesta análise foram considerados apenas os votos nominais para vereador.")
-
 # GRÁFICOS
-
 st.markdown("""\n""")
 st.markdown("### :bar_chart: **Gráficos**")
-
-
 
 # Plotando gráficos
 col1, col2 = st.columns(2)
 
 plot_votos_candidatos = graph_candidatos(df_cand)
-plot_bairros = graph_bairros(df_vt_ptc)
+plot_bairros = graph_bairros(df_filtrado_VotoPorLocal)
 with col1:
-    st.plotly_chart(plot_votos_candidatos)
+    with st.container(border=True):
+        st.plotly_chart(plot_votos_candidatos, use_container_width=True)
+    with st.container(border=True):
+        st.plotly_chart(plot_bairros, use_container_width=True)
 
-    st.plotly_chart(plot_bairros)
 
-
-plot_votos_chapa = graph_candidatos_chapa(df_cand_pt, df_candidato)
-plot_locais = graph_locais(df_vt_loc)
+plot_votos_chapa = graph_candidatos_chapa(df_candidato_partidos, df_candidato)
+plot_locais = graph_locais(df_filtrado_VotoPorLocal)
 with col2:
-    st.plotly_chart(plot_votos_chapa)
-
-    st.plotly_chart(plot_locais)
+        with st.container(border=True):
+            st.plotly_chart(plot_votos_chapa, use_container_width=True)
+            
+        with st.container(border=True):
+            st.plotly_chart(plot_locais, use_container_width=True)
