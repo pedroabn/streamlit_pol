@@ -107,7 +107,7 @@ with col2:
     with st.container(border=True):
         st.metric(
             label = "Mediana dos votos",
-            value = infovoto["Mediana"],
+            value = f'{infovoto["Mediana"]:.0f}',
        )
     with st.container(border=True):
         st.metric(
