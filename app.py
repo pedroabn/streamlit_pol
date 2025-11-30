@@ -66,7 +66,7 @@ st.markdown(
 
 <table class="table-full">
     <tr><th>Métrica</th><th>Valor</th></tr>
-    <tr><td>Número de votos</td><td>{header["VOTOS"]}</td></tr>
+    <tr><td>Número de votos</td><td>{header["VOTOS"]:.0f}</td></tr>
     <tr><td>Partido</td><td>{header["PARTIDO"]}</td></tr>
     <tr><td>Idade</td><td>{header["IDADE"]} anos</td></tr>
     <tr><td>Gênero</td><td>{header["GÊNERO"]}</td></tr>
