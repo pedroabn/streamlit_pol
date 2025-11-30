@@ -14,7 +14,7 @@ def dict_candidato(df):
         "IDADE":idade,
         'RAÇA':raca,
         "RESULTADO":resultado,
-        "VOTOS": votos
+        "VOTOS": f'{votos}'
     }
 
     return dicionario
