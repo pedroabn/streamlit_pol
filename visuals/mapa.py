@@ -6,10 +6,10 @@ import branca.colormap as cm
 def display_mapa(df):
     dfgb = df['votos'].max()
     recife_coords = [-8.05428, -34.88126]
-    m = folium.Map(location=recife_coords, zoom_start=12, tiles="OpenStreetMap")
+    m = folium.Map(location=recife_coords, zoom_start=12, tiles="Cartodb dark_matter")
 
     MiniMap(toggle_display=True).add_to(m)
-    linear = cm.linear.viridis.scale(
+    linear = cm.linear.RdBu_03.scale(
         vmin=df["votos"].min(),
         vmax=df["votos"].max())
     linear.add_to(m)
